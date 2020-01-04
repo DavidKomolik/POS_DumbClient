@@ -26,7 +26,7 @@ void listenFromServer(commArgs* args) {
     cout << "starting listener" << endl;
     char buffer[256];
     int n;
-    while (!args->stop) {
+    while (!*args->stop) {
         bzero(buffer, 256);
         n = read(args->sockfd, buffer, 255);
         if (n < 0) {
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         }
         char buffer2[] = "exit";
         if (memcmp(buffer, buffer2, sizeof(buffer2)-1) == 0) {
-            stop = true;
+            *args.stop = true;
             listener.join();
             close(sockfd);
             return 0; //ma ci nema dat close?

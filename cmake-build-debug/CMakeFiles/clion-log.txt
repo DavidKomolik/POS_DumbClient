@@ -1,40 +1,18 @@
-"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - NMake Makefiles" C:\Users\David\CLionProjects\DumbClient
--- The C compiler identification is MSVC 19.16.27027.1
--- The CXX compiler identification is MSVC 19.16.27027.1
--- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe
--- Check for working C compiler: C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe -- broken
-CMake Error at D:/Program Files (x86)/CLion 2019.3.1/bin/cmake/win/share/cmake-3.15/Modules/CMakeTestCCompiler.cmake:60 (message):
-  The C compiler
-
-    "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe"
-
-  is not able to compile a simple test program.
-
-  It fails with the following output:
-
-    Change Dir: C:/Users/David/CLionProjects/DumbClient/cmake-build-debug/CMakeFiles/CMakeTmp
-    
-    Run Build Command(s):nmake /nologo cmTC_518e3\fast && 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.16.27023\bin\HostX86\x86\nmake.exe" -f CMakeFiles\cmTC_518e3.dir\build.make /nologo -L                  CMakeFiles\cmTC_518e3.dir\build
-    Building C object CMakeFiles/cmTC_518e3.dir/testCCompiler.c.obj
-    	C:\PROGRA~2\MICROS~3\2017\COMMUN~1\VC\Tools\MSVC\1416~1.270\bin\Hostx86\x86\cl.exe @C:\Users\David\AppData\Local\Temp\nmA874.tmp
-    testCCompiler.c
-    Linking C executable cmTC_518e3.exe
-    	"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_518e3.dir --rc=rc --mt=CMAKE_MT-NOTFOUND --manifests  -- C:\PROGRA~2\MICROS~3\2017\COMMUN~1\VC\Tools\MSVC\1416~1.270\bin\Hostx86\x86\link.exe /nologo @CMakeFiles\cmTC_518e3.dir\objects1.rsp @C:\Users\David\AppData\Local\Temp\nmA9DC.tmp
-    RC Pass 1: command "rc /fo CMakeFiles\cmTC_518e3.dir/manifest.res CMakeFiles\cmTC_518e3.dir/manifest.rc" failed (exit code 0) with the following output:
-    The system cannot find the file specifiedNMAKE : fatal error U1077: '"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe"' : return code '0xffffffff'
-    Stop.
-    NMAKE : fatal error U1077: '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.16.27023\bin\HostX86\x86\nmake.exe"' : return code '0x2'
-    Stop.
-    
-    
-
-  
-
-  CMake will not be able to correctly generate this project.
-Call Stack (most recent call first):
-  CMakeLists.txt:2 (project)
-
-
--- Configuring incomplete, errors occurred!
-See also "C:/Users/David/CLionProjects/DumbClient/cmake-build-debug/CMakeFiles/CMakeOutput.log".
-See also "C:/Users/David/CLionProjects/DumbClient/cmake-build-debug/CMakeFiles/CMakeError.log".
+"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\David\CLionProjects\POS_DumbClient
+-- The C compiler identification is GNU 8.2.0
+-- The CXX compiler identification is GNU 8.2.0
+-- Check for working C compiler: C:/MinGW/bin/gcc.exe
+-- Check for working C compiler: C:/MinGW/bin/gcc.exe -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: C:/MinGW/bin/g++.exe
+-- Check for working CXX compiler: C:/MinGW/bin/g++.exe -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Users/David/CLionProjects/POS_DumbClient/cmake-build-debug
