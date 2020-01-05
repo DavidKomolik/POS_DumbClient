@@ -1,4 +1,4 @@
-"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\David\CLionProjects\POS_DumbClient
+"D:\Program Files (x86)\CLion 2019.3.1\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - MinGW Makefiles" C:\Users\David\Desktop\POS_v1.1\POS_DumbClient
 -- The C compiler identification is GNU 8.2.0
 -- The CXX compiler identification is GNU 8.2.0
 -- Check for working C compiler: C:/MinGW/bin/gcc.exe
@@ -10,9 +10,9 @@
 -- Check for working CXX compiler: C:/MinGW/bin/g++.exe
 -- Check for working CXX compiler: C:/MinGW/bin/g++.exe -- works
 -- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
+-- Detecting CXX compiler ABI info - failed
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: C:/Users/David/CLionProjects/POS_DumbClient/cmake-build-debug
+-- Build files have been written to: C:/Users/David/Desktop/POS_v1.1/POS_DumbClient/cmake-build-debug
