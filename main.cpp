@@ -1,4 +1,3 @@
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -13,69 +12,94 @@
 #include <iostream>
 #include "Figurka.h"
 #include <vector>
+#include <sstream>
+#include <time.h>
+#include <chrono>
 
 using namespace std;
 
 typedef struct commArgs {
     string* buffer;
     mutex* mutex2;
-    condition_variable_any* newMsg;
+    condition_variable_any* condCheckID;
     int sockfd;
     bool* stop;
+    vector<Figurka> *figurky;
 }commArgs;
 
 int polickaX[40] = {4,4,4,4,4,3,2,1,0,0,0,1,2,3,4,4,4,4,4,5,6,6,6,6,6,7,8,9,10,10,10,9,8,7,6,6,6,6,6,5};
 int polickaY[40] = {10,9,8,7,6,6,6,6,6,5,4,4,4,4,4,3,2,1,0,0,0,1,2,3,4,4,4,4,4,5,6,6,6,6,6,7,8,9,10,10};
 int plocha[11][11];
-vector<Figurka> figurky;
-Figurka* testovacia = new Figurka('Q', 2, 4);
 int mojeID = -1;
+int pocetFigurokVDomceku = 0;
+int hracovoID = 0;
+bool niektoVyhral = false;
+int pocetHracov = 1;
 
-void inicializujHraca(char idHraca) {
+void inicializujHraca(int idHraca, vector<Figurka> *figurky) {
     switch (idHraca) {
-        case '1':
-            figurky.push_back(Figurka('A',1,1));
-            figurky.push_back(Figurka('B',2,1));
-            figurky.push_back(Figurka('C',1,2));
-            figurky.push_back(Figurka('D',2,2));
+        case 1:
+            figurky->emplace_back('A', 10,1,1,4,5);
+            figurky->emplace_back('B',10,2,1,3,5);
+            figurky->emplace_back('C',10,1,2,2,5);
+            figurky->emplace_back('D',10,2,2,1,5);
             break;
-        case '2':
-            figurky.push_back(Figurka('E',1,1));
-            figurky.push_back(Figurka('F',2,1));
-            figurky.push_back(Figurka('G',1,2));
-            figurky.push_back(Figurka('H',2,2));
+        case 2:
+            figurky->emplace_back('E',20,8,1,5,4);
+            figurky->emplace_back('F',20,9,1,5,3);
+            figurky->emplace_back('G',20,8,2,5,2);
+            figurky->emplace_back('H',20,9,2,5,1);
             break;
-        case '3':
-            figurky.push_back(Figurka('I',1,1));
-            figurky.push_back(Figurka('J',2,1));
-            figurky.push_back(Figurka('K',1,2));
-            figurky.push_back(Figurka('L',2,2));
+        case 3:
+            figurky->emplace_back('I',30,8,8,6,5);
+            figurky->emplace_back('J',30,9,8,7,5);
+            figurky->emplace_back('K',30,8,9,8,5);
+            figurky->emplace_back('L',30,9,9,9,5);
             break;
-        case '4':
-            figurky.push_back(Figurka('M',1,1));
-            figurky.push_back(Figurka('N',2,1));
-            figurky.push_back(Figurka('O',1,2));
-            figurky.push_back(Figurka('P',2,2));
+        case 4:
+            figurky->emplace_back('M',0,1,8,5,6);
+            figurky->emplace_back('N',0,2,8,5,7);
+            figurky->emplace_back('P',0,1,9,5,8);
+            figurky->emplace_back('Q',0,2,9,5,9);
             break;
         default:
             break;
     }
 }
 
-void vykresli() {
+void inicializujHracov(int idHraca, vector<Figurka> *figurky) {
+    switch (idHraca) {
+        case 2:
+            inicializujHraca(1, figurky);
+            break;
+        case 3:
+            inicializujHraca(1, figurky);
+            inicializujHraca(2, figurky);
+            break;
+        case 4:
+            inicializujHraca(1, figurky);
+            inicializujHraca(2, figurky);
+            inicializujHraca(3, figurky);
+            break;
+        default:
+            break;
+    }
+}
+
+void vykresli(vector<Figurka> *figurky) {
+    cout << endl;
+    for (Figurka figurka : *figurky) {
+        plocha[figurka.getSurX()][figurka.getSurY()] = (char)figurka.getID();
+    }
     for (int i = 0; i < 11; i++) {
         for (int j = 0; j < 11; j++) {
             cout << (char)plocha[j][i] << " ";
         }
         cout << "\n";
     }
-    plocha[testovacia->getSurX()][testovacia->getSurY()] = testovacia->getID();
-    for (Figurka figurka : figurky) {
-        plocha[figurka.getSurX()][figurka.getSurY()] = figurka.getID();
-    }
 }
 
-void aktualizujPlochu(char *sprava) {
+void inicializujPlochu() {
     for (int i = 0; i < 11; i++) {
         for (int j = 0; j < 11; j++) {
             plocha[i][j] = '.';
@@ -86,74 +110,163 @@ void aktualizujPlochu(char *sprava) {
         int surY = polickaY[i];
         plocha[surX][surY] = 'O';
     }
-    plocha[polickaX[10]][polickaY[10]] = 'A';
-    plocha[polickaX[20]][polickaY[20]] = 'B';
-    plocha[polickaX[30]][polickaY[30]] = 'C';
-    plocha[polickaX[0]][polickaY[0]] = 'D';
-    char IDfigurky;
+    plocha[1][1] = 'O';
+    plocha[2][1] = 'O';
+    plocha[1][2] = 'O';
+    plocha[2][2] = 'O';
+    plocha[8][1] = 'O';
+    plocha[9][1] = 'O';
+    plocha[8][2] = 'O';
+    plocha[9][2] = 'O';
+    plocha[1][8] = 'O';
+    plocha[2][8] = 'O';
+    plocha[1][9] = 'O';
+    plocha[2][9] = 'O';
+    plocha[8][8] = 'O';
+    plocha[9][8] = 'O';
+    plocha[8][9] = 'O';
+    plocha[9][9] = 'O';
+    plocha[polickaX[10]][polickaY[10]] = '1';
+    plocha[polickaX[20]][polickaY[20]] = '2';
+    plocha[polickaX[30]][polickaY[30]] = '3';
+    plocha[polickaX[0]][polickaY[0]] = '4';
+}
+
+void aktualizujPlochu(char *sprava, vector<Figurka> *figurky, commArgs* args) {
+    inicializujPlochu();
     int noveMiesto = 0;
-
-    int rozdiel = 53 - sprava[0]; // '4' ma ASCII cislo 53
-
-    if(rozdiel < 5) {
-        // prislo ti id po pripojeni , zapamataj si
+    Figurka *figurka = nullptr;
+    if(sprava[0] - 48 < 5) {
         mojeID = sprava[0];
-        cout << sprava[0] << endl; // overenie co mi to prislo;
-
+        pocetHracov = sprava[0] - 48;
+        inicializujHraca(mojeID - 48, figurky);
+        inicializujHracov(mojeID - 48, figurky);
     } else {
         switch (sprava[0]) {
             case 'C':
-                inicializujHraca(sprava[2]);        //TODO nefunguje, dava to furt do default vetvy
+                inicializujHraca(sprava[2] - 48, figurky);
+                pocetHracov++;
                 break;
             case 'P':
-                IDfigurky = sprava[1]; //todo blbost ?
-                if (strlen(sprava) == 4) {
-                    noveMiesto = sprava[2] * 10 + sprava[3];
+                for (int i = 0; i < figurky->size(); ++i) {
+                    if (figurky->at(i).getID() == sprava[3]) {
+                        figurka = &figurky->at(i);
+                        break;
+                    }
                 }
-                noveMiesto = sprava[2];
-                testovacia->setPozicia(polickaX[noveMiesto], polickaY[noveMiesto]);
-                for (Figurka figurka : figurky) {
-                    if (figurka.getID() == IDfigurky) {
-                        figurka.setPozicia(polickaX[noveMiesto], polickaY[noveMiesto]);
+                if (!figurka->getDom()) {
+                    if (sprava[5] != 'X') {
+                        noveMiesto = (((sprava[4] - 48) * 10) + (sprava[5] - 48)) % 40;
+                    } else {
+                        noveMiesto = (sprava[4] - 48) % 40;
+                    }
+                    if (pocetHracov != 1) {
+                        hracovoID = (sprava[2] - 48) % pocetHracov;
+                        args->condCheckID->notify_one();
+                    }
+                    plocha[figurka->getSurX()][figurka->getSurY()] = 'O';
+                    figurka->setPozicia(noveMiesto);
+                    figurka->setNoveSuradnice(polickaX[noveMiesto], polickaY[noveMiesto]);
+                    for (int i = 0; i < figurky->size(); ++i) {
+                        if ((figurky->at(i).getID() != figurka->getID()) && (figurky->at(i).getPozicia() == figurka->getPozicia())) {
+                            figurky->at(i).setPozicia(figurky->at(i).getStartPozicia());
+                            figurky->at(i).setNoveSuradnice(figurky->at(i).getSurCakaniaX(),figurky->at(i).getSurCakaniaY());
+                        }
                     }
                 }
                 break;
-            case 'D':
+            case 'U':
+                for (int i = 0; i < figurky->size(); ++i) {
+                    if (figurky->at(i).getID() == sprava[4]) {
+                        figurka = &figurky->at(i);
+                        break;
+                    }
+                }
+                if (mojeID == (int)sprava[2] && !figurka->getDom()) {
+                    pocetFigurokVDomceku++;
+                }
+                if (!figurka->getDom()) {
+                    figurka->setDom();
+                    plocha[figurka->getSurX()][figurka->getSurY()] = 'O';
+                    figurka->setNoveSuradnice(figurka->getSurKoncaX(), figurka->getSurKoncaY());
+                    figurka->setPozicia(-1);
+                }
+                if (pocetHracov != 1) {
+                    hracovoID = (sprava[2] - 48) % pocetHracov;
+                    args->condCheckID->notify_one();
+                }
+                break;
+            case 'W':
+                cout << "Hrac s id: " << sprava[2] << " vyhral." << endl;
+                niektoVyhral = true;
                 break;
             default:
                 break;
         }
     }
-    vykresli();
+    vykresli(figurky);
 }
 
-/*void pohniFigurkou(int idHraca) {
-    int cislo = rand() % 6 + 1;
-    cout << "Hrac s id: " << (char)idHraca << " hodil: " << cislo << "\n";
-    int pocet6 = 0;
-    while (cislo == 6) {
-        pocet6++;
-        cislo = rand() % 6 + 1;
-        cout << "Hrac s id: " << (char)idHraca << " hadze znovu, hodil: " << cislo << "\n";
-    }
-    int pocetPolicok = pocet6*6 + cislo;
-    if (pocetPrejdenych + pocetPolicok >= 40) {
-        cout << "Hrac s id: " << (char)idHraca << " vosiel do domceka.\n";
-        plocha[surX][surY] = 'O';
-        stop = true;
-    } else {
-        sucasnyIndex = (sucasnyIndex + pocetPolicok) % 40;
-        pocetPrejdenych += pocetPolicok;
-        plocha[surX][surY] = 'O';
-        surX = polickaX[sucasnyIndex];
-        surY = polickaY[sucasnyIndex];
-        if (plocha[surX][surY] != 'O') {
-            cout << "Hrac s id: " << (char)idHraca << " vyhodil hraca s id: " << (char)plocha[surX][surY] << "\n";
-            inicializujHraca(plocha[surX][surY]);
+char zvolFigurku(int idHraca) {
+    bool spravnaVolba = false;
+    char IDfigurky;
+    string vstup = "";
+    if (!niektoVyhral) {
+        while (!spravnaVolba) {
+            cout << "Zadaj ID svojej figurky:" << endl << endl;
+            getline(cin, vstup);
+            while (vstup.length() != 1) {
+                cout << "Zadaj len jeden znak!" << endl;
+                getline(cin, vstup);
+            }
+            IDfigurky = vstup[0];
+            switch (idHraca - 48) {
+                case 1:
+                    if (IDfigurky == 'A' || IDfigurky == 'B' || IDfigurky == 'C' || IDfigurky == 'D') {
+                        spravnaVolba = true;
+                    } else {
+                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                    }
+                    break;
+                case 2:
+                    if (IDfigurky == 'E' || IDfigurky == 'F' || IDfigurky == 'G' || IDfigurky == 'H') {
+                        spravnaVolba = true;
+                    } else {
+                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                    }
+                    break;
+                case 3:
+                    if (IDfigurky == 'I' || IDfigurky == 'J' || IDfigurky == 'K' || IDfigurky == 'L') {
+                        spravnaVolba = true;
+                    } else {
+                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                    }
+                    break;
+                case 4:
+                    if (IDfigurky == 'M' || IDfigurky == 'N' || IDfigurky == 'P' || IDfigurky == 'Q') {
+                        spravnaVolba = true;
+                    } else {
+                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
-        plocha[surX][surY] = idHraca;
+        return IDfigurky;
+    } else {
+        return 'W';
     }
-}*/
+}
+
+bool sendMsg(string msg,commArgs* args) {
+    int n = write(args->sockfd, msg.c_str(), strlen(msg.c_str()));
+    if (n < 0) {
+        perror("Error writing to socket");
+        return 5;
+    }
+    return true;
+}
 
 void listenFromServer(commArgs* args) {
     cout << "starting listener" << endl;
@@ -167,32 +280,80 @@ void listenFromServer(commArgs* args) {
             perror("Error reading from socket");
         }
         args->buffer->assign(buffer);
-        args->newMsg->notify_one(); //momentalne to nic nerobi
+        args->condCheckID->notify_one(); //momentalne to nic nerobi
         if (memcmp(buffer, buffer2, sizeof(buffer2)-1) == 0) {
             return;
         }
-        cout << "Prijata sprava : " << buffer << endl;
-        aktualizujPlochu(buffer); //TODO : opravit, posiela lokalnu premennu
+        if (buffer[0] != 'X') {
+            cout << "\nPrijata sprava : " << buffer << endl;
+            if (buffer[0] == 'W') { //TODO: ostatni klienti, ktori dostanu tuto spravu vratane toho ktory vyhral si spravia vypis a poslu serveru spravu exit
+                cout << "Hrac s id: " << buffer[2] << " vyhralll." << endl;
+                sendMsg("exit" + to_string(mojeID - 48),args);
+                *args->stop = true;
+                niektoVyhral = true;
+                return;
+            } else {
+                aktualizujPlochu(buffer, args->figurky,args);
+            }
+        }
     }
 }
 
-bool sendMsg(string msg,commArgs* args) {
-    int n = write(args->sockfd, msg.c_str(), strlen(msg.c_str()));
-    if (n < 0) {
-        perror("Error writing to socket");
-        return 5;
+bool skontrolujVyhru() {
+    if (pocetFigurokVDomceku == 1) {
+        return true;
     }
-
-    if (msg.compare("exit\n") == 0) {
-        *args->stop = true;
-        //close(sockfd);
-        return 0; //ma ci nema dat close?
-    }
-    return true;
+    return false;
 }
 
+string pohniFigurkou(vector<Figurka> *figurky, int pocetPolicok) {
+    char zvolenaFigurkaID = zvolFigurku(mojeID);
+    if (zvolenaFigurkaID == 'W') {
+        return "exit\n";
+    } else {
+        Figurka* figurka = nullptr;
+        for (int i = 0; i < figurky->size(); ++i) {
+            if (figurky->at(i).getID() == zvolenaFigurkaID) {
+                figurka = &figurky->at(i);
+                break;
+            }
+        }
+        while (figurka->getDom() && !skontrolujVyhru()) {
+            cout << "Figurka je v domceku, vyber si inu." << endl;
+            zvolenaFigurkaID = zvolFigurku(mojeID);
+            figurka = nullptr;
+            for (int i = 0; i < figurky->size(); ++i) {
+                if (figurky->at(i).getID() == zvolenaFigurkaID) {
+                    figurka = &figurky->at(i);
+                    break;
+                }
+            }
+        }
+        Figurka* aktualna = nullptr;
+        for (int i = 0; i < figurky->size(); ++i) {
+            if (figurky->at(i).getID() == zvolenaFigurkaID) {
+                aktualna = &figurky->at(i);
+                break;
+            }
+        }
+        stringstream konverter;
+        konverter << (char)aktualna->getID();
+        string idcko = "";
+        konverter >> idcko;
+        string vysledokPohybu = "";
+        if (aktualna->getPocetPrejdenych() + pocetPolicok >= 40) {
+            vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko;
+            return vysledokPohybu;
+        } else {
+            vysledokPohybu = "P_" + to_string(mojeID - 48) + idcko + to_string(((aktualna->getPozicia() + pocetPolicok) % 40)) + "X";
+            aktualna->pridajPocetPrejdenych(pocetPolicok);
+            return vysledokPohybu;
+        }
+    }
+}
 
 int main(int argc, char *argv[]) {
+    srand(time(NULL));
     int sockfd, n;
     struct sockaddr_in serv_addr;
     struct hostent* server;
@@ -224,34 +385,44 @@ int main(int argc, char *argv[]) {
         return 4;
     }
     bool stop = false;
+    vector<Figurka> figurky;
     string buff;
     mutex mutex2;
     condition_variable_any newMsg;
-    commArgs  args = {&buff,&mutex2,&newMsg,sockfd,&stop};
+    commArgs args = {&buff,&mutex2,&newMsg,sockfd,&stop,&figurky};
     thread listener(listenFromServer,&args);
     sendMsg("CONNECT", &args);
-
-//    while (!stop) {
-//        system("clear");
-//        printf("Please enter a message: ");
-//        cout << "Pohyb figurok vykonavaj v tvare P{ID}\n";
-//        bzero(buffer, 256);
-//        fgets(buffer, 255, stdin);
-//        n = write(sockfd, buffer, strlen(buffer));
-//        if (n < 0) {
-//            perror("Error writing to socket");
-//            return 5;
-//        }
-//        char buffer2[] = "exit";
-//        if (memcmp(buffer, buffer2, sizeof(buffer2)-1) == 0) {
-//            *args.stop = true;
-//            listener.join();
-//            //close(sockfd);
-//            return 0; //ma ci nema dat close?
-//        }
-
-
+    sleep(1);
+    while (!stop && !niektoVyhral) {
+        args.mutex2->lock();
+        while ((hracovoID + 1) != (mojeID - 48)) {
+            args.condCheckID->wait(*args.mutex2);
+            if(stop || niektoVyhral) {
+                listener.join();
+                return 0;
+            }
+        }
+        cout << "Si na tahu." << endl;
+        int cislo = rand() % 6 + 1;
+        cout << "Hodil si: " << cislo << "\n";
+        int pocet6 = 0;
+        while (cislo == 6) {
+            pocet6++;
+            cislo = rand() % 6 + 1;
+            cout << "Hodil si 6, hadzes znovu: " << cislo << "\n";
+        }
+        cout << endl;
+        int pocetPolicok = pocet6*6 + cislo;
+        sendMsg(pohniFigurkou(&figurky, pocetPolicok), &args);
+        sleep(1);
+        if (skontrolujVyhru()) {                            //TODO: tu posiela spravu W_ a potom exit so svojim ID, nastavi stop na true a vypne sa
+            sendMsg(("W_" + to_string(mojeID - 48)), &args);
+            sendMsg(("exit" + to_string(mojeID - 48)), &args);
+            stop = true;
+        }
+    }
     listener.join();
-    close(sockfd);
+    //sleep(5);
+    //close(sockfd);
     return 0;
 }
