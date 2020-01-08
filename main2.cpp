@@ -14,7 +14,6 @@
 #include <vector>
 #include <sstream>
 #include <time.h>
-#include <chrono>
 
 using namespace std;
 
@@ -276,7 +275,7 @@ void listenFromServer(commArgs* args) {
             perror("Error reading from socket");
         }
         args->buffer->assign(buffer);
-        args->condCheckID->notify_one(); //momentalne to nic nerobi
+        args->condCheckID->notify_one();
         if (memcmp(buffer, buffer2, sizeof(buffer2) - 1) == 0) {
             return;
         }
@@ -294,7 +293,7 @@ void listenFromServer(commArgs* args) {
     }
 }
 
-//TODO: opravit
+
 bool skontrolujVyhru() {
     if (pocetFigurokVDomceku == 1) {
         return true;
@@ -335,7 +334,7 @@ string pohniFigurkou(vector<Figurka> *figurky, int pocetPolicok) {
     konverter >> idcko;
     string vysledokPohybu = "";
     if (aktualna->getPocetPrejdenych() + pocetPolicok >= 40) {
-        if (pocetFigurokVDomceku + 1 == 1) {            //TODO: opravit toto
+        if (pocetFigurokVDomceku + 1 == 1) {
             vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko + "_W";
         } else {
             vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko;
@@ -399,6 +398,7 @@ int main(int argc, char *argv[]) {
                 return 0;
             }
         }
+        args.mutex2->unlock();
         cout << "Si na tahu." << endl;
         int cislo = rand() % 6 + 1;
         cout << "Hodil si: " << cislo << "\n";
@@ -419,7 +419,6 @@ int main(int argc, char *argv[]) {
         }
     }
     listener.join();
-    //sleep(5);
-    //close(sockfd);
+
     return 0;
 }

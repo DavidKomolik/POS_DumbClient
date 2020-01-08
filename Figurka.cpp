@@ -9,7 +9,7 @@ Figurka::Figurka(char pID, int pIndex, int pSurX, int pSurY, int pSurKoncaX, int
     this->surKoncaY = pSurKoncaY;
     this->jeVDomceku = false;
     this->pozicia = pIndex;
-    this->pocetPrejdenych = 39;
+    this->pocetPrejdenych = 0;
     this->surX = pSurX;
     this->surY = pSurY;
 }
