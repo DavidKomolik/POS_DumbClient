@@ -191,14 +191,14 @@ void aktualizujPlochu(char *sprava, vector<Figurka> *figurky, commArgs* args) {
                     figurka->setNoveSuradnice(figurka->getSurKoncaX(), figurka->getSurKoncaY());
                     figurka->setPozicia(-1);
                 }
-                if (pocetHracov != 1) {
-                    hracovoID = (sprava[2] - 48) % pocetHracov;
-                    args->condCheckID->notify_one();
+                if (sprava[6] == 'W') {
+                    niektoVyhral = true;
+                } else {
+                    if (pocetHracov != 1) {
+                        hracovoID = (sprava[2] - 48) % pocetHracov;
+                        args->condCheckID->notify_one();
+                    }
                 }
-                break;
-            case 'W':
-                cout << "Hrac s id: " << sprava[2] << " vyhral." << endl;
-                niektoVyhral = true;
                 break;
             default:
                 break;
@@ -211,52 +211,48 @@ char zvolFigurku(int idHraca) {
     bool spravnaVolba = false;
     char IDfigurky;
     string vstup = "";
-    if (!niektoVyhral) {
-        while (!spravnaVolba) {
-            cout << "Zadaj ID svojej figurky:" << endl << endl;
+    while (!spravnaVolba) {
+        cout << "Zadaj ID svojej figurky:" << endl << endl;
+        getline(cin, vstup);
+        while (vstup.length() != 1) {
+            cout << "Zadaj len jeden znak!" << endl;
             getline(cin, vstup);
-            while (vstup.length() != 1) {
-                cout << "Zadaj len jeden znak!" << endl;
-                getline(cin, vstup);
-            }
-            IDfigurky = vstup[0];
-            switch (idHraca - 48) {
-                case 1:
-                    if (IDfigurky == 'A' || IDfigurky == 'B' || IDfigurky == 'C' || IDfigurky == 'D') {
-                        spravnaVolba = true;
-                    } else {
-                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
-                    }
-                    break;
-                case 2:
-                    if (IDfigurky == 'E' || IDfigurky == 'F' || IDfigurky == 'G' || IDfigurky == 'H') {
-                        spravnaVolba = true;
-                    } else {
-                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
-                    }
-                    break;
-                case 3:
-                    if (IDfigurky == 'I' || IDfigurky == 'J' || IDfigurky == 'K' || IDfigurky == 'L') {
-                        spravnaVolba = true;
-                    } else {
-                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
-                    }
-                    break;
-                case 4:
-                    if (IDfigurky == 'M' || IDfigurky == 'N' || IDfigurky == 'P' || IDfigurky == 'Q') {
-                        spravnaVolba = true;
-                    } else {
-                        cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
-                    }
-                    break;
-                default:
-                    break;
-            }
         }
-        return IDfigurky;
-    } else {
-        return 'W';
+        IDfigurky = vstup[0];
+        switch (idHraca - 48) {
+            case 1:
+                if (IDfigurky == 'A' || IDfigurky == 'B' || IDfigurky == 'C' || IDfigurky == 'D') {
+                    spravnaVolba = true;
+                } else {
+                    cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                }
+                break;
+            case 2:
+                if (IDfigurky == 'E' || IDfigurky == 'F' || IDfigurky == 'G' || IDfigurky == 'H') {
+                    spravnaVolba = true;
+                } else {
+                    cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                }
+                break;
+            case 3:
+                if (IDfigurky == 'I' || IDfigurky == 'J' || IDfigurky == 'K' || IDfigurky == 'L') {
+                    spravnaVolba = true;
+                } else {
+                    cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                }
+                break;
+            case 4:
+                if (IDfigurky == 'M' || IDfigurky == 'N' || IDfigurky == 'P' || IDfigurky == 'Q') {
+                    spravnaVolba = true;
+                } else {
+                    cout << "Nespravne ID, figurka nepatri tebe. Zadaj znovu!\n";
+                }
+                break;
+            default:
+                break;
+        }
     }
+    return IDfigurky;
 }
 
 bool sendMsg(string msg,commArgs* args) {
@@ -281,24 +277,24 @@ void listenFromServer(commArgs* args) {
         }
         args->buffer->assign(buffer);
         args->condCheckID->notify_one(); //momentalne to nic nerobi
-        if (memcmp(buffer, buffer2, sizeof(buffer2)-1) == 0) {
+        if (memcmp(buffer, buffer2, sizeof(buffer2) - 1) == 0) {
             return;
         }
         if (buffer[0] != 'X') {
-            cout << "\nPrijata sprava : " << buffer << endl;
-            if (buffer[0] == 'W') { //TODO: ostatni klienti, ktori dostanu tuto spravu vratane toho ktory vyhral si spravia vypis a poslu serveru spravu exit
-                cout << "Hrac s id: " << buffer[2] << " vyhralll." << endl;
-                sendMsg("exit" + to_string(mojeID - 48),args);
+            //cout << "\nPrijata sprava : " << buffer << endl;
+            if (buffer[0] == 'W') {
+                cout << "Hrac s id: " << buffer[2] << " vyhral." << endl;
+                sendMsg("exit" + to_string(mojeID - 48), args);
                 *args->stop = true;
-                niektoVyhral = true;
                 return;
             } else {
-                aktualizujPlochu(buffer, args->figurky,args);
+                aktualizujPlochu(buffer, args->figurky, args);
             }
         }
     }
 }
 
+//TODO: opravit
 bool skontrolujVyhru() {
     if (pocetFigurokVDomceku == 1) {
         return true;
@@ -308,47 +304,48 @@ bool skontrolujVyhru() {
 
 string pohniFigurkou(vector<Figurka> *figurky, int pocetPolicok) {
     char zvolenaFigurkaID = zvolFigurku(mojeID);
-    if (zvolenaFigurkaID == 'W') {
-        return "exit\n";
-    } else {
-        Figurka* figurka = nullptr;
+    Figurka *figurka = nullptr;
+    for (int i = 0; i < figurky->size(); ++i) {
+        if (figurky->at(i).getID() == zvolenaFigurkaID) {
+            figurka = &figurky->at(i);
+            break;
+        }
+    }
+    while (figurka->getDom() && !skontrolujVyhru()) {
+        cout << "Figurka je v domceku, vyber si inu." << endl;
+        zvolenaFigurkaID = zvolFigurku(mojeID);
+        figurka = nullptr;
         for (int i = 0; i < figurky->size(); ++i) {
             if (figurky->at(i).getID() == zvolenaFigurkaID) {
                 figurka = &figurky->at(i);
                 break;
             }
         }
-        while (figurka->getDom() && !skontrolujVyhru()) {
-            cout << "Figurka je v domceku, vyber si inu." << endl;
-            zvolenaFigurkaID = zvolFigurku(mojeID);
-            figurka = nullptr;
-            for (int i = 0; i < figurky->size(); ++i) {
-                if (figurky->at(i).getID() == zvolenaFigurkaID) {
-                    figurka = &figurky->at(i);
-                    break;
-                }
-            }
+    }
+    Figurka *aktualna = nullptr;
+    for (int i = 0; i < figurky->size(); ++i) {
+        if (figurky->at(i).getID() == zvolenaFigurkaID) {
+            aktualna = &figurky->at(i);
+            break;
         }
-        Figurka* aktualna = nullptr;
-        for (int i = 0; i < figurky->size(); ++i) {
-            if (figurky->at(i).getID() == zvolenaFigurkaID) {
-                aktualna = &figurky->at(i);
-                break;
-            }
-        }
-        stringstream konverter;
-        konverter << (char)aktualna->getID();
-        string idcko = "";
-        konverter >> idcko;
-        string vysledokPohybu = "";
-        if (aktualna->getPocetPrejdenych() + pocetPolicok >= 40) {
-            vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko;
-            return vysledokPohybu;
+    }
+    stringstream konverter;
+    konverter << (char) aktualna->getID();
+    string idcko = "";
+    konverter >> idcko;
+    string vysledokPohybu = "";
+    if (aktualna->getPocetPrejdenych() + pocetPolicok >= 40) {
+        if (pocetFigurokVDomceku + 1 == 1) {            //TODO: opravit toto
+            vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko + "_W";
         } else {
-            vysledokPohybu = "P_" + to_string(mojeID - 48) + idcko + to_string(((aktualna->getPozicia() + pocetPolicok) % 40)) + "X";
-            aktualna->pridajPocetPrejdenych(pocetPolicok);
-            return vysledokPohybu;
+            vysledokPohybu = "U_" + to_string(mojeID - 48) + "_" + idcko;
         }
+        return vysledokPohybu;
+    } else {
+        vysledokPohybu =
+                "P_" + to_string(mojeID - 48) + idcko + to_string(((aktualna->getPozicia() + pocetPolicok) % 40)) + "X";
+        aktualna->pridajPocetPrejdenych(pocetPolicok);
+        return vysledokPohybu;
     }
 }
 
@@ -415,7 +412,7 @@ int main(int argc, char *argv[]) {
         int pocetPolicok = pocet6*6 + cislo;
         sendMsg(pohniFigurkou(&figurky, pocetPolicok), &args);
         sleep(1);
-        if (skontrolujVyhru()) {                            //TODO: tu posiela spravu W_ a potom exit so svojim ID, nastavi stop na true a vypne sa
+        if (skontrolujVyhru()) {
             sendMsg(("W_" + to_string(mojeID - 48)), &args);
             sendMsg(("exit" + to_string(mojeID - 48)), &args);
             stop = true;
